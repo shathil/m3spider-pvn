@@ -1,9 +1,13 @@
-package com.mmmsys.m3vpn;
+package com.mmsys.spidernet;
 
 import android.util.Log;
 
+import com.mmmsys.m3vpn.M3ByteBufferPool;
+import com.mmmsys.m3vpn.Packet;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -11,17 +15,16 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class M3TCPInput implements Runnable
+public class SpidernetTCPInput implements Runnable
 {
-    private static final String TAG = M3TCPInput.class.getSimpleName();
+    private static final String TAG = SpidernetTCPInput.class.getSimpleName();
     private static final int HEADER_SIZE = Packet.IP4_HEADER_SIZE + Packet.TCP_HEADER_SIZE;
 
     private Selector selector;
-    private ConcurrentLinkedQueue<ByteBuffer> outputQueue;
-
-    public M3TCPInput(ConcurrentLinkedQueue<ByteBuffer> outputQueue, Selector selector)
+    private FileChannel vpnOutput;
+    public SpidernetTCPInput(FileChannel vpnOutput, Selector selector)
     {
-        this.outputQueue = outputQueue;
+        this.vpnOutput = vpnOutput;
         this.selector = selector;
     }
 
@@ -38,7 +41,7 @@ public class M3TCPInput implements Runnable
                 int readyChannels = selector.select();
 
                 if (readyChannels == 0) {
-                    Thread.sleep(100);
+                    Thread.sleep(10);
                     continue;
                 }
 
@@ -61,18 +64,32 @@ public class M3TCPInput implements Runnable
                         SocketChannel inputChannel = (SocketChannel) key.channel();
                         // XXX: We should handle any IOExceptions here immediately,
                         // but that probably won't happen with UDP
-                        int readBytes = inputChannel.read(receiveBuffer);
+                        try{
+                            int readBytes = inputChannel.read(receiveBuffer);
 
-                        //Packet referencePacket = (Packet) key.attachment();
-                        //referencePacket.updateUDPBuffer(receiveBuffer, readBytes);
-                        //receiveBuffer.position(HEADER_SIZE + readBytes);
+                                //referencePacket.updateUDPBuffer(receiveBuffer, readBytes);
+                                //receiveBuffer.position(HEADER_SIZE + readBytes);
+                                if(readBytes>0) {
 
-                        Log.d(TAG, "Received packet ");
-
-                        outputQueue.offer(receiveBuffer);
+                                    receiveBuffer.flip();
+                                    //Packet referencePacket = new Packet(receiveBuffer);
+                                    //Log.d(TAG, "Received packet " + referencePacket.toString());
+                                    while (receiveBuffer.hasRemaining())
+                                        vpnOutput.write(receiveBuffer);
+                                    //M3ByteBufferPool.release(referencePacket.backingBuffer);
+                                    //
+                                    //
+                                    // M3ByteBufferPool.release(referencePacket.copyPacket);
+                                }
+                        }catch (IOException ie) {
+                            Log.d(TAG,ie.toString());
+                        }
+                        M3ByteBufferPool.release(receiveBuffer);
                     }
                 }
+
             }
+            Log.i(TAG, "Exited");
         }
         catch (InterruptedException e)
         {

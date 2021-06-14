@@ -1,63 +1,62 @@
-package com.mmmsys.m3vpn;
+/*
+** Copyright 2015, Mohamed Naufal
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+
+package com.mmsys.spidernet;
 
 import android.util.Log;
 
+import com.mmmsys.m3vpn.M3ByteBufferPool;
+import com.mmmsys.m3vpn.M3LRUCache;
+import com.mmmsys.m3vpn.M3VPNService;
+import com.mmmsys.m3vpn.Packet;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-
-/*
- ** Copyright 2015, Mohamed Naufal
- **
- ** Licensed under the Apache License, Version 2.0 (the "License");
- ** you may not use this file except in compliance with the License.
- ** You may obtain a copy of the License at
- **
- **     http://www.apache.org/licenses/LICENSE-2.0
- **
- ** Unless required by applicable law or agreed to in writing, software
- ** distributed under the License is distributed on an "AS IS" BASIS,
- ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- ** See the License for the specific language governing permissions and
- ** limitations under the License.
- */
-
-public class M3TCPOutput implements Runnable
+public class SpidernetUDPOutput implements Runnable
 {
-    private static final String TAG = M3TCPOutput.class.getSimpleName();
+    private static final String TAG = SpidernetUDPOutput.class.getSimpleName();
 
     private M3VPNService vpnService;
     private ConcurrentLinkedQueue<Packet> inputQueue;
-    private ConcurrentLinkedQueue<ByteBuffer> outputQueue;
     private Selector selector;
-
     private Map<Integer,Object> tunnelConfig = new HashMap<Integer, Object>();
 
     private static final int MAX_CACHE_SIZE = 6;
 
-    private M3LRUCache<Integer, SocketChannel> tunnelCache =
-            new M3LRUCache<>(MAX_CACHE_SIZE, new M3LRUCache.CleanupCallback<String, SocketChannel>()
+    private M3LRUCache<Integer, DatagramChannel> tunnelCache =
+            new M3LRUCache<>(MAX_CACHE_SIZE, new M3LRUCache.CleanupCallback<String, DatagramChannel>()
             {
                 @Override
-                public void cleanup(Map.Entry<String, SocketChannel> eldest)
+                public void cleanup(Map.Entry<String, DatagramChannel> eldest)
                 {
                     closeChannel(eldest.getValue());
                 }
             });
 
-
-    private Random random = new Random();
-    public M3TCPOutput(ConcurrentLinkedQueue<Packet> inputQueue, Selector selector, M3VPNService vpnService, Map<Integer,Object> tunnelConfig)
+    /**Upon acitivyt the client will reccecie  the list as an asynchronous method and push the criticla secction. The servicec reeive it  call
+     * via the function params. In case if the list is empty the service falls back to the default function*/
+    public SpidernetUDPOutput(ConcurrentLinkedQueue<Packet> inputQueue, Selector selector, M3VPNService vpnService, Map<Integer,Object> tunnelConfig)
     {
         this.inputQueue = inputQueue;
         this.selector = selector;
@@ -66,10 +65,11 @@ public class M3TCPOutput implements Runnable
     }
 
 
+
     @Override
     public void run()
     {
-        Log.i(TAG, "Started");
+        Log.i(TAG, "Started "+tunnelConfig.size());
         try
         {
 
@@ -90,15 +90,13 @@ public class M3TCPOutput implements Runnable
                     break;
 
                 int context = currentPacket.ip4Header.typeOfService;
-                //Log.d(TAG, "Packet to "+ currentPacket.toString());
-
-                SocketChannel outputTunnel = tunnelCache.get(context);
+                DatagramChannel outputTunnel = tunnelCache.get(context);
                 String config = (String) tunnelConfig.get(context);
                 String [] ipAndPort = config.split("::");
                 String destinationAddress = ipAndPort[0];
                 int destinationPort = Integer.parseInt(ipAndPort[1]);
                 if (outputTunnel == null) {
-                    outputTunnel = SocketChannel.open();
+                    outputTunnel = DatagramChannel.open();
                     vpnService.protect(outputTunnel.socket());
                     try
                     {
@@ -114,15 +112,11 @@ public class M3TCPOutput implements Runnable
                     }
                     outputTunnel.configureBlocking(false);
                     outputTunnel.socket().setTrafficClass(context);
-                    outputTunnel.socket().setTcpNoDelay(true);
                     outputTunnel.socket().setSendBufferSize(65534);
-                    outputTunnel.socket().setReceiveBufferSize(65534);
-                    outputTunnel.socket().setKeepAlive(true);
 
                     selector.wakeup();
                     outputTunnel.register(selector, SelectionKey.OP_READ, currentPacket);
                     tunnelCache.put(context, outputTunnel);
-                    Log.d(TAG, "Connection cached "+tunnelCache.size());
                 }
 
                 try
@@ -132,7 +126,6 @@ public class M3TCPOutput implements Runnable
                     //ByteBuffer payloadBuffer = currentPacket;
                     //while (payloadBuffer.hasRemaining())
                     outputTunnel.write(currentPacket.copyPacket);
-                    Log.d(TAG, "Packet written to socket "+ context);
 
                 }
                 catch (IOException e)
@@ -144,9 +137,6 @@ public class M3TCPOutput implements Runnable
                 M3ByteBufferPool.release(currentPacket.backingBuffer);
                 M3ByteBufferPool.release(currentPacket.copyPacket);
             }
-
-
-
         }
         catch (InterruptedException e)
         {
@@ -154,14 +144,25 @@ public class M3TCPOutput implements Runnable
         }
         catch (IOException e)
         {
-            Log.e(TAG, e.toString(), e);
+            Log.i(TAG, e.toString(), e);
         }
         finally
         {
             closeAll();
         }
     }
-    private void closeChannel(SocketChannel channel)
+
+    private void closeAll()
+    {
+        Iterator<Map.Entry<Integer, DatagramChannel>> it = tunnelCache.entrySet().iterator();
+        while (it.hasNext())
+        {
+            closeChannel(it.next().getValue());
+            it.remove();
+        }
+    }
+
+    private void closeChannel(DatagramChannel channel)
     {
         try
         {
@@ -172,14 +173,4 @@ public class M3TCPOutput implements Runnable
             // Ignore
         }
     }
-    private void closeAll()
-    {
-        Iterator<Map.Entry<Integer, SocketChannel>> it = tunnelCache.entrySet().iterator();
-        while (it.hasNext())
-        {
-            closeChannel(it.next().getValue());
-            it.remove();
-        }
-    }
-
 }

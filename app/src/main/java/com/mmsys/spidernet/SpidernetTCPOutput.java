@@ -1,11 +1,15 @@
-package com.mmmsys.m3vpn;
+package com.mmsys.spidernet;
 
 import android.util.Log;
+
+import com.mmmsys.m3vpn.M3ByteBufferPool;
+import com.mmmsys.m3vpn.M3LRUCache;
+import com.mmmsys.m3vpn.M3VPNService;
+import com.mmmsys.m3vpn.Packet;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -32,9 +36,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  ** limitations under the License.
  */
 
-public class M3TCPOutput implements Runnable
+public class SpidernetTCPOutput implements Runnable
 {
-    private static final String TAG = M3TCPOutput.class.getSimpleName();
+    private static final String TAG = SpidernetTCPOutput.class.getSimpleName();
 
     private M3VPNService vpnService;
     private ConcurrentLinkedQueue<Packet> inputQueue;
@@ -57,7 +61,7 @@ public class M3TCPOutput implements Runnable
 
 
     private Random random = new Random();
-    public M3TCPOutput(ConcurrentLinkedQueue<Packet> inputQueue, Selector selector, M3VPNService vpnService, Map<Integer,Object> tunnelConfig)
+    public SpidernetTCPOutput(ConcurrentLinkedQueue<Packet> inputQueue, Selector selector, M3VPNService vpnService, Map<Integer,Object> tunnelConfig)
     {
         this.inputQueue = inputQueue;
         this.selector = selector;

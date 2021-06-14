@@ -23,6 +23,10 @@ import android.os.ParcelFileDescriptor;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.mmsys.spidernet.SpidernetRunnable;
+import com.mmsys.spidernet.SpidernetTCPInput;
+import com.mmsys.spidernet.SpidernetTCPOutput;
+
 import java.io.Closeable;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -80,16 +84,21 @@ public class M3VPNService extends VpnService
             //udpSelector = Selector.open();
             tcpSelector = Selector.open();
             deviceToNetworkQueue = new ConcurrentLinkedQueue<>();
-            networkToDeviceQueue = new ConcurrentLinkedQueue<>();
+            //networkToDeviceQueue = new ConcurrentLinkedQueue<>();
+
+            FileChannel vpnInput = new FileInputStream(vpnInterface.getFileDescriptor()).getChannel();
+            FileChannel vpnOutput = new FileOutputStream(vpnInterface.getFileDescriptor()).getChannel();
 
             executorService = Executors.newFixedThreadPool(3);
-            //executorService.submit(new UDPInput(networkToDeviceQueue, udpSelector));
-            //executorService.submit(new UDPOutput(deviceToNetworkQueue, udpSelector, this,tunConfigs));
-            executorService.submit(new M3TCPInput(networkToDeviceQueue, tcpSelector));
-            executorService.submit(new M3TCPOutput(deviceToNetworkQueue, tcpSelector, this,tunConfigs));
+            //executorService.execute(new M3TCPInput(networkToDeviceQueue, tcpSelector));
+            //executorService.execute(new M3TCPOutput(deviceToNetworkQueue, tcpSelector, this,tunConfigs));
+            //executorService.execute(new M3Runnable(vpnInterface.getFileDescriptor(),deviceToNetworkQueue,networkToDeviceQueue));
 
 
-            executorService.submit(new M3Runnable(vpnInterface.getFileDescriptor(),deviceToNetworkQueue,networkToDeviceQueue));
+            executorService.execute(new SpidernetTCPInput(vpnOutput, tcpSelector));
+            executorService.execute(new SpidernetTCPOutput(deviceToNetworkQueue, tcpSelector, this,tunConfigs));
+            executorService.execute(new SpidernetRunnable(vpnInput,deviceToNetworkQueue));
+
             LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(BROADCAST_VPN_STATE).putExtra("running", true));
             Log.i(TAG, "Started");
         }

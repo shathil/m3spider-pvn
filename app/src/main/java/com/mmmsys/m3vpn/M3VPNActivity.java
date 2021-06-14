@@ -26,7 +26,7 @@ import android.content.pm.PackageManager;
 import android.net.VpnService;
 import android.os.AsyncTask;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class M3VPNActivity extends ActionBarActivity
+public class M3VPNActivity extends AppCompatActivity
 {
     private static final int VPN_REQUEST_CODE = 0x0F;
 
@@ -64,11 +64,35 @@ public class M3VPNActivity extends ActionBarActivity
         final Button vpnButton = (Button)findViewById(R.id.vpn);
 
         String addrs1 = "128.214.11.246::4445";
-        String addrs2 = "128.214.11.246::4444";
-        int toS1 = 142;
-        int toS2 = 143;
+        //String addrs2 = "128.214.11.246::4444";
+        int toS1 = 0;
+        //int toS2 = 184;
+
+
+        //    case "CS0": dscp = 0;
+        //    case "CS1": dscp = 32;
+        //    case "AF11":dscp = 40;
+        //    case "AF12":dscp = 48;
+        //    case "AF13": dscp = 56;
+        //    case "CS2": dscp = 64;
+        //    case "AF21": dscp = 72;
+        //    case "AF22": dscp = 80;
+        //    case "AF23": dscp = 88;
+        //    case "CS3": dscp = 96;
+        //    case "AF31": dscp = 104;
+        //    case "AF32": dscp = 112;
+        //    case "AF33": dscp = 120;
+        //    case "CS4": dscp = 128;
+        //    case "AF41": dscp = 136;
+        //    case "AF42": dscp = 144;
+        //    case "AF43": dscp = 152;
+        //    case "CS5": dscp = 160;
+        //    case "EF": dscp = 184;
+        //    case "CS6": dscp = 192;
+        //    case "CS7": dscp = 224;
+
         M3VPNConfig.getQueueInstance().push(toS1,addrs1);
-        M3VPNConfig.getQueueInstance().push(toS2,addrs1);
+        //M3VPNConfig.getQueueInstance().push(toS2,addrs2);
 
         vpnButton.setOnClickListener(new View.OnClickListener()
         {
