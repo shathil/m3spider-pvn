@@ -71,9 +71,12 @@ public class SpidernetTCPInput implements Runnable
                                 //receiveBuffer.position(HEADER_SIZE + readBytes);
                                 if(readBytes>0) {
 
+                                    Packet referencePacket = new Packet(receiveBuffer);
+
+                                    Log.d(TAG, "Received packet " + referencePacket.toString());
+                                    //receiveBuffer.rewind();
                                     receiveBuffer.flip();
-                                    //Packet referencePacket = new Packet(receiveBuffer);
-                                    //Log.d(TAG, "Received packet " + referencePacket.toString());
+
                                     while (receiveBuffer.hasRemaining())
                                         vpnOutput.write(receiveBuffer);
                                     //M3ByteBufferPool.release(referencePacket.backingBuffer);

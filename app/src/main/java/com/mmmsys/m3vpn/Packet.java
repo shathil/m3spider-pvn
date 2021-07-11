@@ -40,6 +40,10 @@ public class Packet
     private boolean isUDP;
 
     public Packet(ByteBuffer buffer) throws UnknownHostException {
+        this.copyPacket = buffer.duplicate();
+        buffer.rewind();
+        //this.copyPacket.flip();
+
         this.ip4Header = new IP4Header(buffer);
         if (this.ip4Header.protocol == IP4Header.TransportProtocol.TCP) {
             this.tcpHeader = new TCPHeader(buffer);
@@ -49,8 +53,6 @@ public class Packet
             this.isUDP = true;
         }
         this.backingBuffer = buffer;
-        buffer.rewind();
-        this.copyPacket = buffer;
 
         /* now the baking buffer contains the copy of the packet*/
 

@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class M3ByteBufferPool
 {
-    private static final int BUFFER_SIZE = 1460; // XXX: Is this ideal?
+    private static final int BUFFER_SIZE = 4096; // XXX: Is this ideal?
     private static ConcurrentLinkedQueue<ByteBuffer> pool = new ConcurrentLinkedQueue<>();
 
     public static ByteBuffer acquire()

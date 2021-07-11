@@ -55,10 +55,11 @@ public class M3Runnable implements Runnable
                 int readBytes = vpnInput.read(bufferToNetwork);
                 if (readBytes > 0)
                 {
-                    dataSent = true;
-                    bufferToNetwork.flip();
+
+                    //bufferToNetwork.limit(readBytes);
                     Packet packet = new Packet(bufferToNetwork);
                     vpndeviceToNetworkQueue.offer(packet);
+                    dataSent = true;
                 }
                 else
                 {

@@ -85,16 +85,19 @@ public class SpidernetTCPOutput implements Runnable
                 do
                 {
                     currentPacket = inputQueue.poll();
-                    if (currentPacket != null)
+                    if (currentPacket != null) {
+                        //Log.d(TAG, "Packet context "+ currentPacket.toString());
                         break;
+                    }
                     Thread.sleep(10);
                 } while (!currentThread.isInterrupted());
 
                 if (currentThread.isInterrupted())
                     break;
 
-                int context = currentPacket.ip4Header.typeOfService;
-                //Log.d(TAG, "Packet to "+ currentPacket.toString());
+                //int context = currentPacket.ip4Header.typeOfService;
+
+                int context = 0;
 
                 SocketChannel outputTunnel = tunnelCache.get(context);
                 String config = (String) tunnelConfig.get(context);
@@ -124,7 +127,7 @@ public class SpidernetTCPOutput implements Runnable
                     outputTunnel.socket().setKeepAlive(true);
 
                     selector.wakeup();
-                    outputTunnel.register(selector, SelectionKey.OP_READ, currentPacket);
+                    outputTunnel.register(selector, SelectionKey.OP_READ, currentPacket.copyPacket);
                     tunnelCache.put(context, outputTunnel);
                     Log.d(TAG, "Connection cached "+tunnelCache.size());
                 }
@@ -135,8 +138,9 @@ public class SpidernetTCPOutput implements Runnable
                     /* Current packet*/
                     //ByteBuffer payloadBuffer = currentPacket;
                     //while (payloadBuffer.hasRemaining())
-                    outputTunnel.write(currentPacket.copyPacket);
-                    Log.d(TAG, "Packet written to socket "+ context);
+
+                    int wrbytes=outputTunnel.write(currentPacket.copyPacket);
+                    Log.d(TAG, "Packet written to socket "+ wrbytes+"bytes "+currentPacket.toString());
 
                 }
                 catch (IOException e)
@@ -147,6 +151,7 @@ public class SpidernetTCPOutput implements Runnable
                 }
                 M3ByteBufferPool.release(currentPacket.backingBuffer);
                 M3ByteBufferPool.release(currentPacket.copyPacket);
+
             }
 
 

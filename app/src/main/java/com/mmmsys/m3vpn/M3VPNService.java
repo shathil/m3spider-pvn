@@ -26,6 +26,8 @@ import android.util.Log;
 import com.mmsys.spidernet.SpidernetRunnable;
 import com.mmsys.spidernet.SpidernetTCPInput;
 import com.mmsys.spidernet.SpidernetTCPOutput;
+import com.mmsys.spidernet.SpidernetUDPInput;
+import com.mmsys.spidernet.SpidernetUDPOutput;
 
 import java.io.Closeable;
 import java.io.FileDescriptor;
@@ -95,8 +97,8 @@ public class M3VPNService extends VpnService
             //executorService.execute(new M3Runnable(vpnInterface.getFileDescriptor(),deviceToNetworkQueue,networkToDeviceQueue));
 
 
-            executorService.execute(new SpidernetTCPInput(vpnOutput, tcpSelector));
-            executorService.execute(new SpidernetTCPOutput(deviceToNetworkQueue, tcpSelector, this,tunConfigs));
+            executorService.execute(new SpidernetUDPInput(vpnOutput, tcpSelector));
+            executorService.execute(new SpidernetUDPOutput(deviceToNetworkQueue, tcpSelector, this,tunConfigs));
             executorService.execute(new SpidernetRunnable(vpnInput,deviceToNetworkQueue));
 
             LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(BROADCAST_VPN_STATE).putExtra("running", true));

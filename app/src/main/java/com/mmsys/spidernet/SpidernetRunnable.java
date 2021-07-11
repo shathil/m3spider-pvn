@@ -55,7 +55,7 @@ public class SpidernetRunnable implements Runnable
                 if (readBytes > 0)
                 {
                     dataSent = true;
-                    bufferToNetwork.flip();
+                    bufferToNetwork.limit(readBytes).flip();
                     Packet packet = new Packet(bufferToNetwork);
                     vpndeviceToNetworkQueue.offer(packet);
                 }
@@ -71,6 +71,7 @@ public class SpidernetRunnable implements Runnable
                     //Log.d(TAG, "VPN thread  sleeping");
                     Thread.sleep(10);
                 }
+                bufferToNetwork.clear();
             }
         }
         catch (InterruptedException e)

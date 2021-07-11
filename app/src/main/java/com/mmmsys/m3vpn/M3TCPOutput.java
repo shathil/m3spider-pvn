@@ -81,16 +81,20 @@ public class M3TCPOutput implements Runnable
                 do
                 {
                     currentPacket = inputQueue.poll();
-                    if (currentPacket != null)
+                    if (currentPacket != null) {
+                        Log.d(TAG, "Packet context "+ currentPacket.ip4Header.destinationAddress.toString());
                         break;
+                    }
                     Thread.sleep(10);
+
                 } while (!currentThread.isInterrupted());
 
                 if (currentThread.isInterrupted())
                     break;
 
-                int context = currentPacket.ip4Header.typeOfService;
-                //Log.d(TAG, "Packet to "+ currentPacket.toString());
+                //int context = currentPacket.ip4Header.typeOfService;
+
+                int context=0;
 
                 SocketChannel outputTunnel = tunnelCache.get(context);
                 String config = (String) tunnelConfig.get(context);
@@ -129,7 +133,7 @@ public class M3TCPOutput implements Runnable
                 {
 
                     /* Current packet*/
-                    //ByteBuffer payloadBuffer = currentPacket;
+                    //ByteBuffer payloadBuffer = currentPacket.copyPacket.rewind();
                     //while (payloadBuffer.hasRemaining())
                     outputTunnel.write(currentPacket.copyPacket);
                     Log.d(TAG, "Packet written to socket "+ context);

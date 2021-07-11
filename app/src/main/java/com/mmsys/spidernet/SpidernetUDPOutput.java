@@ -123,18 +123,25 @@ public class SpidernetUDPOutput implements Runnable
                 {
 
                     /* Current packet*/
-                    //ByteBuffer payloadBuffer = currentPacket;
-                    //while (payloadBuffer.hasRemaining())
-                    outputTunnel.write(currentPacket.copyPacket);
+                    //ByteBuffer payloadBuffer = currentPacket.copyPacket;
+                     //while (currentPacket.copyPacket.hasRemaining())
+                    int wrbytes=outputTunnel.write(currentPacket.copyPacket);
+                    Log.d(TAG, "Packet written to socket "+ wrbytes+"bytes "+currentPacket.toString());
+
 
                 }
                 catch (IOException e)
                 {
                     Log.e(TAG, "Network write error: " + ipAndPort, e);
                     tunnelCache.remove(context);
+
+
+
+
+
                     closeChannel(outputTunnel);
                 }
-                M3ByteBufferPool.release(currentPacket.backingBuffer);
+                //M3ByteBufferPool.release(currentPacket.backingBuffer);
                 M3ByteBufferPool.release(currentPacket.copyPacket);
             }
         }

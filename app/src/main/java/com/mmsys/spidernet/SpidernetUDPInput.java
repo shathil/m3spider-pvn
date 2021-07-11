@@ -24,6 +24,7 @@ import com.mmmsys.m3vpn.Packet;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Iterator;
@@ -37,10 +38,11 @@ public class SpidernetUDPInput implements Runnable
 
     private Selector selector;
     private ConcurrentLinkedQueue<ByteBuffer> outputQueue;
+    private FileChannel vpnOutput;
 
-    public SpidernetUDPInput(ConcurrentLinkedQueue<ByteBuffer> outputQueue, Selector selector)
+    public SpidernetUDPInput(FileChannel vpnOutput, Selector selector)
     {
-        this.outputQueue = outputQueue;
+        this.vpnOutput = vpnOutput;
         this.selector = selector;
     }
 
@@ -79,12 +81,15 @@ public class SpidernetUDPInput implements Runnable
                         // XXX: We should handle any IOExceptions here immediately,
                         // but that probably won't happen with UDP
                         int readBytes = inputChannel.read(receiveBuffer);
-
+                        receiveBuffer.flip();
+                        while(receiveBuffer.hasRemaining())
+                            vpnOutput.write(receiveBuffer);
                         //Packet referencePacket = (Packet) key.attachment();
                         //referencePacket.updateUDPBuffer(receiveBuffer, readBytes);
                         //receiveBuffer.position(HEADER_SIZE + readBytes);
 
-                        outputQueue.offer(receiveBuffer);
+                        //outputQueue.offer(receiveBuffer);
+
                     }
                 }
             }
