@@ -18,8 +18,8 @@ package com.mmsys.spidernet;
 
 import android.util.Log;
 
-import com.mmmsys.m3vpn.M3ByteBufferPool;
-import com.mmmsys.m3vpn.M3LRUCache;
+import com.mmmsys.m3vpn.ByteBufferPool;
+import com.mmmsys.m3vpn.LRUCache;
 import com.mmmsys.m3vpn.M3VPNService;
 import com.mmmsys.m3vpn.Packet;
 
@@ -44,8 +44,8 @@ public class SpidernetUDPOutput implements Runnable
 
     private static final int MAX_CACHE_SIZE = 6;
 
-    private M3LRUCache<Integer, DatagramChannel> tunnelCache =
-            new M3LRUCache<>(MAX_CACHE_SIZE, new M3LRUCache.CleanupCallback<String, DatagramChannel>()
+    private LRUCache<Integer, DatagramChannel> tunnelCache =
+            new LRUCache<>(MAX_CACHE_SIZE, new LRUCache.CleanupCallback<String, DatagramChannel>()
             {
                 @Override
                 public void cleanup(Map.Entry<String, DatagramChannel> eldest)
@@ -91,7 +91,7 @@ public class SpidernetUDPOutput implements Runnable
 
                 int context = currentPacket.ip4Header.typeOfService;
                 DatagramChannel outputTunnel = tunnelCache.get(context);
-                String config = (String) tunnelConfig.get(context);
+                String config = (String) tunnelConfig.get(0);
                 String [] ipAndPort = config.split("::");
                 String destinationAddress = ipAndPort[0];
                 int destinationPort = Integer.parseInt(ipAndPort[1]);
@@ -106,8 +106,8 @@ public class SpidernetUDPOutput implements Runnable
                     {
                         Log.e(TAG, "Connection error: " + ipAndPort, e);
                         closeChannel(outputTunnel);
-                        M3ByteBufferPool.release(currentPacket.backingBuffer);
-                        M3ByteBufferPool.release(currentPacket.copyPacket);
+                        ByteBufferPool.release(currentPacket.backingBuffer);
+                        ByteBufferPool.release(currentPacket.copyPacket);
                         continue;
                     }
                     outputTunnel.configureBlocking(false);
@@ -142,7 +142,7 @@ public class SpidernetUDPOutput implements Runnable
                     closeChannel(outputTunnel);
                 }
                 //M3ByteBufferPool.release(currentPacket.backingBuffer);
-                M3ByteBufferPool.release(currentPacket.copyPacket);
+                ByteBufferPool.release(currentPacket.copyPacket);
             }
         }
         catch (InterruptedException e)

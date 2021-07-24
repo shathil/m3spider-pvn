@@ -2,7 +2,7 @@ package com.mmsys.spidernet;
 
 import android.util.Log;
 
-import com.mmmsys.m3vpn.M3ByteBufferPool;
+import com.mmmsys.m3vpn.ByteBufferPool;
 import com.mmmsys.m3vpn.Packet;
 
 import java.io.IOException;
@@ -13,7 +13,6 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class SpidernetTCPInput implements Runnable
 {
@@ -57,7 +56,7 @@ public class SpidernetTCPInput implements Runnable
 
                         //we do not nead the partial packet
 
-                        ByteBuffer receiveBuffer = M3ByteBufferPool.acquire();
+                        ByteBuffer receiveBuffer = ByteBufferPool.acquire();
                         // Leave space for the header
                         //receiveBuffer.position(HEADER_SIZE);
 
@@ -77,6 +76,7 @@ public class SpidernetTCPInput implements Runnable
                                     //receiveBuffer.rewind();
                                     receiveBuffer.flip();
 
+
                                     while (receiveBuffer.hasRemaining())
                                         vpnOutput.write(receiveBuffer);
                                     //M3ByteBufferPool.release(referencePacket.backingBuffer);
@@ -87,7 +87,7 @@ public class SpidernetTCPInput implements Runnable
                         }catch (IOException ie) {
                             Log.d(TAG,ie.toString());
                         }
-                        M3ByteBufferPool.release(receiveBuffer);
+                        ByteBufferPool.release(receiveBuffer);
                     }
                 }
 

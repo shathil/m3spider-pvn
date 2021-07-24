@@ -68,7 +68,7 @@ public class M3UDPInput implements Runnable
 
                         //we do not nead the partial packet
 
-                        ByteBuffer receiveBuffer = M3ByteBufferPool.acquire();
+                        ByteBuffer receiveBuffer = ByteBufferPool.acquire();
                         // Leave space for the header
                         //receiveBuffer.position(HEADER_SIZE);
 
@@ -122,7 +122,7 @@ public class M3UDPInput implements Runnable
 
                         //we do not nead the partial packet
 
-                        ByteBuffer receiveBuffer = M3ByteBufferPool.acquire();
+                        ByteBuffer receiveBuffer = ByteBufferPool.acquire();
                         // Leave space for the header
                         //receiveBuffer.position(HEADER_SIZE);
 

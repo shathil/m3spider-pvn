@@ -24,13 +24,10 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.mmsys.spidernet.SpidernetRunnable;
-import com.mmsys.spidernet.SpidernetTCPInput;
-import com.mmsys.spidernet.SpidernetTCPOutput;
 import com.mmsys.spidernet.SpidernetUDPInput;
 import com.mmsys.spidernet.SpidernetUDPOutput;
 
 import java.io.Closeable;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -68,7 +65,7 @@ public class M3VPNService extends VpnService
 
     //private Selector oneUDPSelector;
     private Selector udpSelector;
-    private Selector tcpSelector;
+    //private Selector tcpSelector;
 
     @Override
     public void onCreate()
@@ -76,15 +73,17 @@ public class M3VPNService extends VpnService
         super.onCreate();
         isRunning = true;
         setupVPN();
+
         tunConfigs = M3VPNConfig.getQueueInstance().getAll();
         if(tunConfigs==null){
 
         }
 
+
         try
         {
-            //udpSelector = Selector.open();
-            tcpSelector = Selector.open();
+            udpSelector = Selector.open();
+            //tcpSelector = Selector.open();
             deviceToNetworkQueue = new ConcurrentLinkedQueue<>();
             //networkToDeviceQueue = new ConcurrentLinkedQueue<>();
 
@@ -92,13 +91,13 @@ public class M3VPNService extends VpnService
             FileChannel vpnOutput = new FileOutputStream(vpnInterface.getFileDescriptor()).getChannel();
 
             executorService = Executors.newFixedThreadPool(3);
-            //executorService.execute(new M3TCPInput(networkToDeviceQueue, tcpSelector));
-            //executorService.execute(new M3TCPOutput(deviceToNetworkQueue, tcpSelector, this,tunConfigs));
-            //executorService.execute(new M3Runnable(vpnInterface.getFileDescriptor(),deviceToNetworkQueue,networkToDeviceQueue));
+            //executorService.execute(new SpidernetTCPInput(vpnOutput, tcpSelector));
+            //executorService.execute(new SpidernetTCPOutput(deviceToNetworkQueue, tcpSelector, this,tunConfigs));
+            //executorService.execute(new SpidernetRunnable(vpnInput,deviceToNetworkQueue));
 
 
-            executorService.execute(new SpidernetUDPInput(vpnOutput, tcpSelector));
-            executorService.execute(new SpidernetUDPOutput(deviceToNetworkQueue, tcpSelector, this,tunConfigs));
+            executorService.execute(new SpidernetUDPOutput(deviceToNetworkQueue, udpSelector, this,tunConfigs));
+            executorService.execute(new SpidernetUDPInput(vpnOutput,udpSelector));
             executorService.execute(new SpidernetRunnable(vpnInput,deviceToNetworkQueue));
 
             LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(BROADCAST_VPN_STATE).putExtra("running", true));
@@ -152,7 +151,7 @@ public class M3VPNService extends VpnService
         //deviceToNetworkTCPQueue = null;
         deviceToNetworkQueue = null;
         networkToDeviceQueue = null;
-        M3ByteBufferPool.clear();
+        ByteBufferPool.clear();
         closeResources(udpSelector, vpnInterface);
     }
 

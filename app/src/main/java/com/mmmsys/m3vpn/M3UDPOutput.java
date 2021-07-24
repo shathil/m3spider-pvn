@@ -39,8 +39,8 @@ public class M3UDPOutput implements Runnable
 
     private static final int MAX_CACHE_SIZE = 6;
 
-    private M3LRUCache<Integer, DatagramChannel> tunnelCache =
-            new M3LRUCache<>(MAX_CACHE_SIZE, new M3LRUCache.CleanupCallback<String, DatagramChannel>()
+    private LRUCache<Integer, DatagramChannel> tunnelCache =
+            new LRUCache<>(MAX_CACHE_SIZE, new LRUCache.CleanupCallback<String, DatagramChannel>()
             {
                 @Override
                 public void cleanup(Map.Entry<String, DatagramChannel> eldest)
@@ -101,8 +101,8 @@ public class M3UDPOutput implements Runnable
                     {
                         Log.e(TAG, "Connection error: " + ipAndPort, e);
                         closeChannel(outputTunnel);
-                        M3ByteBufferPool.release(currentPacket.backingBuffer);
-                        M3ByteBufferPool.release(currentPacket.copyPacket);
+                        ByteBufferPool.release(currentPacket.backingBuffer);
+                        ByteBufferPool.release(currentPacket.copyPacket);
                         continue;
                     }
                     outputTunnel.configureBlocking(false);
@@ -129,8 +129,8 @@ public class M3UDPOutput implements Runnable
                     tunnelCache.remove(context);
                     closeChannel(outputTunnel);
                 }
-                M3ByteBufferPool.release(currentPacket.backingBuffer);
-                M3ByteBufferPool.release(currentPacket.copyPacket);
+                ByteBufferPool.release(currentPacket.backingBuffer);
+                ByteBufferPool.release(currentPacket.copyPacket);
             }
         }
         catch (InterruptedException e)

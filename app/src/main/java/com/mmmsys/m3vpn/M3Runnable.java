@@ -47,7 +47,7 @@ public class M3Runnable implements Runnable
             while (!Thread.interrupted())
             {
                 if (dataSent)
-                    bufferToNetwork = M3ByteBufferPool.acquire();
+                    bufferToNetwork = ByteBufferPool.acquire();
                 else
                     bufferToNetwork.clear();
 
@@ -76,7 +76,7 @@ public class M3Runnable implements Runnable
                         vpnOutput.write(bufferFromNetwork);
                     dataReceived = true;
 
-                    M3ByteBufferPool.release(bufferFromNetwork);
+                    ByteBufferPool.release(bufferFromNetwork);
                 }
                 else
                 {

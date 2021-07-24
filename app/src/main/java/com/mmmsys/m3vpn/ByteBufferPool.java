@@ -16,34 +16,30 @@
 
 package com.mmmsys.m3vpn;
 
-import java.util.LinkedHashMap;
+import java.nio.ByteBuffer;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class M3LRUCache<K, V> extends LinkedHashMap<K, V>
+public class ByteBufferPool
 {
-    private int maxSize;
-    private CleanupCallback callback;
+    private static final int BUFFER_SIZE = 4096; // XXX: Is this ideal?
+    private static ConcurrentLinkedQueue<ByteBuffer> pool = new ConcurrentLinkedQueue<>();
 
-    public M3LRUCache(int maxSize, CleanupCallback callback)
+    public static ByteBuffer acquire()
     {
-        super(maxSize + 1, 1, true);
-
-        this.maxSize = maxSize;
-        this.callback = callback;
+        ByteBuffer buffer = pool.poll();
+        if (buffer == null)
+            buffer = ByteBuffer.allocateDirect(BUFFER_SIZE); // Using DirectBuffer for zero-copy
+        return buffer;
     }
 
-    @Override
-    protected boolean removeEldestEntry(Entry<K, V> eldest)
+    public static void release(ByteBuffer buffer)
     {
-        if (size() > maxSize)
-        {
-            callback.cleanup(eldest);
-            return true;
-        }
-        return false;
+        buffer.clear();
+        pool.offer(buffer);
     }
 
-    public static interface CleanupCallback<K, V>
+    public static void clear()
     {
-        public void cleanup(Entry<K, V> eldest);
+        pool.clear();
     }
 }

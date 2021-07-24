@@ -5,7 +5,6 @@ import android.util.Log;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -45,8 +44,8 @@ public class M3TCPOutput implements Runnable
 
     private static final int MAX_CACHE_SIZE = 6;
 
-    private M3LRUCache<Integer, SocketChannel> tunnelCache =
-            new M3LRUCache<>(MAX_CACHE_SIZE, new M3LRUCache.CleanupCallback<String, SocketChannel>()
+    private LRUCache<Integer, SocketChannel> tunnelCache =
+            new LRUCache<>(MAX_CACHE_SIZE, new LRUCache.CleanupCallback<String, SocketChannel>()
             {
                 @Override
                 public void cleanup(Map.Entry<String, SocketChannel> eldest)
@@ -112,8 +111,8 @@ public class M3TCPOutput implements Runnable
                     {
                         Log.e(TAG, "Connection error: " + ipAndPort, e);
                         closeChannel(outputTunnel);
-                        M3ByteBufferPool.release(currentPacket.backingBuffer);
-                        M3ByteBufferPool.release(currentPacket.copyPacket);
+                        ByteBufferPool.release(currentPacket.backingBuffer);
+                        ByteBufferPool.release(currentPacket.copyPacket);
                         continue;
                     }
                     outputTunnel.configureBlocking(false);
@@ -145,8 +144,8 @@ public class M3TCPOutput implements Runnable
                     tunnelCache.remove(context);
                     closeChannel(outputTunnel);
                 }
-                M3ByteBufferPool.release(currentPacket.backingBuffer);
-                M3ByteBufferPool.release(currentPacket.copyPacket);
+                ByteBufferPool.release(currentPacket.backingBuffer);
+                ByteBufferPool.release(currentPacket.copyPacket);
             }
 
 

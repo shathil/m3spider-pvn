@@ -2,13 +2,10 @@ package com.mmsys.spidernet;
 
 import android.util.Log;
 
-import com.mmmsys.m3vpn.M3ByteBufferPool;
+import com.mmmsys.m3vpn.ByteBufferPool;
 import com.mmmsys.m3vpn.Packet;
 
 import java.io.Closeable;
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -43,10 +40,12 @@ public class SpidernetRunnable implements Runnable
             ByteBuffer bufferToNetwork = null;
             boolean dataSent = true;
             boolean dataReceived;
+
             while (!Thread.interrupted())
             {
+
                 if (dataSent)
-                    bufferToNetwork = M3ByteBufferPool.acquire();
+                    bufferToNetwork = ByteBufferPool.acquire();
                 else
                     bufferToNetwork.clear();
 

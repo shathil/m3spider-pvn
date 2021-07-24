@@ -18,7 +18,7 @@ package com.mmsys.spidernet;
 
 import android.util.Log;
 
-import com.mmmsys.m3vpn.M3ByteBufferPool;
+import com.mmmsys.m3vpn.ByteBufferPool;
 import com.mmmsys.m3vpn.Packet;
 
 import java.io.IOException;
@@ -73,7 +73,7 @@ public class SpidernetUDPInput implements Runnable
 
                         //we do not nead the partial packet
 
-                        ByteBuffer receiveBuffer = M3ByteBufferPool.acquire();
+                        ByteBuffer receiveBuffer = ByteBufferPool.acquire();
                         // Leave space for the header
                         //receiveBuffer.position(HEADER_SIZE);
 
@@ -84,11 +84,17 @@ public class SpidernetUDPInput implements Runnable
                         receiveBuffer.flip();
                         while(receiveBuffer.hasRemaining())
                             vpnOutput.write(receiveBuffer);
+
+                        Packet referencePacket = new Packet(receiveBuffer);
+                        Log.d(TAG, "Packet written to VPN socket "+ readBytes+"bytes "+referencePacket.toString());
+
                         //Packet referencePacket = (Packet) key.attachment();
                         //referencePacket.updateUDPBuffer(receiveBuffer, readBytes);
                         //receiveBuffer.position(HEADER_SIZE + readBytes);
 
                         //outputQueue.offer(receiveBuffer);
+
+                        ByteBufferPool.release(receiveBuffer);
 
                     }
                 }
@@ -130,7 +136,7 @@ public class SpidernetUDPInput implements Runnable
 
                         //we do not nead the partial packet
 
-                        ByteBuffer receiveBuffer = M3ByteBufferPool.acquire();
+                        ByteBuffer receiveBuffer = ByteBufferPool.acquire();
                         // Leave space for the header
                         //receiveBuffer.position(HEADER_SIZE);
 
